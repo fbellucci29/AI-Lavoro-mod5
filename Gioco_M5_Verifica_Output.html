@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>M5 — Cosa fai con questo output?</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:800px;height:550px;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;
+  background:linear-gradient(135deg,#0d1f12 0%,#1a3a24 60%,#0a1a10 100%);color:#fff;user-select:none}
+#header{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  background:rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.12)}
+#header h1{font-size:14px;font-weight:700}
+#prog-wrap{display:flex;align-items:center;gap:10px}
+.pdot{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.2)}
+.pdot.done{background:#4ade80}
+.pdot.active{background:#fff}
+#score-badge{background:rgba(255,255,255,.14);padding:4px 13px;border-radius:16px;font-size:12px;font-weight:700}
+#game{height:502px;padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+#case-num{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#86efac}
+#context-bar{font-size:12px;color:#d1fae5;background:rgba(255,255,255,.06);padding:8px 12px;border-radius:8px;border-left:3px solid #4ade80}
+#output-box{background:#0f1a12;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:14px 15px;
+  font-size:12.5px;line-height:1.65;flex-shrink:0;max-height:180px;overflow-y:auto;color:#e2e8f0}
+#output-box .ai-badge{display:inline-block;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.3);
+  border-radius:4px;font-size:10px;padding:2px 7px;margin-bottom:8px;color:#4ade80;font-weight:700}
+#choices{display:flex;gap:10px;justify-content:center;margin-top:2px}
+.choice-btn{flex:1;padding:13px 10px;border-radius:10px;border:2px solid;cursor:pointer;font-size:13px;font-weight:700;
+  text-align:center;transition:all .18s;background:transparent;color:#fff}
+.ch-usa{border-color:#4ade80;color:#4ade80}
+.ch-usa:hover{background:rgba(74,222,128,.18)}
+.ch-ver{border-color:#fbbf24;color:#fbbf24}
+.ch-ver:hover{background:rgba(251,191,36,.18)}
+.ch-no{border-color:#f87171;color:#f87171}
+.ch-no:hover{background:rgba(248,113,113,.18)}
+.choice-btn.correct{pointer-events:none}
+.choice-btn.wrong{pointer-events:none;opacity:.35}
+.choice-btn.other{pointer-events:none;opacity:.35}
+.ch-usa.correct{background:rgba(74,222,128,.2)}
+.ch-ver.correct{background:rgba(251,191,36,.2)}
+.ch-no.correct{background:rgba(248,113,113,.2)}
+#feedback{background:rgba(0,0,0,.35);border-radius:9px;padding:11px 13px;font-size:12px;line-height:1.55;
+  display:none;border-left:3px solid #86efac;flex-shrink:0}
+#feedback.show{display:block}
+#next-btn{align-self:flex-end;background:#16a34a;color:#fff;border:none;padding:9px 22px;
+  border-radius:8px;font-size:13px;cursor:pointer;font-weight:600;display:none}
+#next-btn.show{display:block}
+#next-btn:hover{background:#15803d}
+#ov{display:none;position:absolute;inset:0;z-index:100;background:rgba(0,0,0,.9);
+  align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:30px}
+#ov.show{display:flex}
+#ov .em{font-size:44px;margin-bottom:10px}
+#ov h2{font-size:21px;margin-bottom:8px}
+#ov .fs{font-size:32px;font-weight:900;color:#4ade80;margin:6px 0 12px}
+#ov p{font-size:13px;opacity:.8;max-width:500px;line-height:1.6;margin-bottom:18px}
+.btn{background:#16a34a;color:#fff;border:none;padding:11px 26px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:600}
+.btn:hover{background:#15803d}
+body{position:relative}
+#startOv{position:absolute;inset:0;z-index:50;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:30px}
+#startOv h2{font-size:20px;font-weight:700;color:#fff;margin-bottom:10px}
+#startOv p{font-size:13px;color:rgba(255,255,255,.8);max-width:500px;line-height:1.6;margin-bottom:20px}
+.start-icon{font-size:44px;margin-bottom:12px}
+.start-btn{padding:11px 32px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:transform .15s}
+.start-btn:hover{transform:translateY(-2px)}
+.btn-rigioca{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s}
+.btn-rigioca:hover{background:rgba(255,255,255,.25)}
+.btn-corso{background:#fff;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:background .2s}
+.btn-corso:hover{background:#f0f0f0}
+.hdr-btns{display:flex;gap:8px;align-items:center}
+</style>
+</head>
+<body>
+<div id="startOv">
+  <div class="start-icon">🤖</div>
+  <h2>Cosa fai con questo output AI?</h2>
+  <p>Per ogni output generato dall'AI, scegli se usarlo direttamente, verificarlo prima o non usarlo. 5 casi pratici dalla vita lavorativa reale.</p>
+  <button class="start-btn" style="background:#16a34a;color:#fff" onclick="startGame()">▶ Inizia</button>
+</div>
+<div id="header">
+  <h1>🤖 M5 — Cosa fai con questo output AI?</h1>
+  <div id="prog-wrap">
+    <div class="pdot active" id="pd0"></div>
+    <div class="pdot" id="pd1"></div>
+    <div class="pdot" id="pd2"></div>
+    <div class="pdot" id="pd3"></div>
+    <div class="pdot" id="pd4"></div>
+    <div id="score-badge">Punti: <span id="sc">0</span>/5</div>
+    <div class="hdr-btns">
+      <button class="btn-rigioca" onclick="showStart()">🔄 Rigioca</button>
+      <button class="btn-corso" style="color:#0d1f12" onclick="window.close()">Torna al corso</button>
+    </div>
+  </div>
+</div>
+
+<div id="game">
+  <div id="case-num"></div>
+  <div id="context-bar"></div>
+  <div id="output-box"></div>
+  <div id="choices">
+    <button class="choice-btn ch-usa" id="btn-usa" onclick="choose('usa')">✅ USA DIRETTAMENTE</button>
+    <button class="choice-btn ch-ver" id="btn-ver" onclick="choose('ver')">⚠️ VERIFICA PRIMA</button>
+    <button class="choice-btn ch-no"  id="btn-no"  onclick="choose('no')">🚫 NON USARE</button>
+  </div>
+  <div id="feedback"></div>
+  <button id="next-btn" onclick="nextCase()">Caso successivo →</button>
+</div>
+
+<div id="ov">
+  <div class="em" id="ov-em">🎯</div>
+  <h2>Analisi completata!</h2>
+  <div class="fs"><span id="fsc">0</span> / 5</div>
+  <p id="ov-msg"></p>
+  <div style="display:flex;gap:10px;justify-content:center">
+    <button class="btn" onclick="showStart()">🔄 Rigioca</button>
+    <button class="btn" style="background:#78909c" onclick="window.close()">Torna al corso</button>
+  </div>
+</div>
+
+<script>
+const cases=[
+  {
+    num:"Caso 1 di 5",
+    ctx:"Stai preparando una comunicazione interna sul diritto di accesso ai dati. Chiedi all'AI di citare la norma di riferimento.",
+    output:`<div class="ai-badge">OUTPUT AI</div><br>Il diritto di accesso ai propri dati personali è sancito dall'<strong>articolo 16 del GDPR</strong>, che riconosce a ogni interessato la facoltà di ottenere conferma del trattamento e copia dei dati. La richiesta può essere presentata al titolare del trattamento in forma scritta o verbale.`,
+    correct:'ver',
+    fb:"⚠️ <strong>Verifica prima — c'è un errore fattuale.</strong> Il diritto di accesso è previsto dall'<em>articolo 15</em> del GDPR, non dall'art. 16 (che riguarda la rettifica). L'AI ha generato una citazione plausibile ma sbagliata. Prima di usare un output con riferimenti normativi, verifica sempre la fonte originale."
+  },
+  {
+    num:"Caso 2 di 5",
+    ctx:"Devi estrarre i punti principali da un report interno di 20 pagine. Carichi il documento nel sistema AI aziendale approvato e chiedi un riassunto.",
+    output:`<div class="ai-badge">OUTPUT AI</div><br>Il report analizza le performance del Q1 2026. I principali risultati sono: crescita del fatturato del 12% rispetto al Q1 2025; riduzione dei costi operativi del 7%; tre nuovi contratti firmati nel settore retail; area criticità: ritardi nella supply chain del comparto Est Europa. Il report raccomanda un piano di azione entro luglio 2026.`,
+    correct:'usa',
+    fb:"✅ <strong>Puoi usarlo — con una rapida rilettura.</strong> Il riassunto è prodotto da un sistema approvato, su documento interno, senza dati personali sensibili. Il contenuto sembra aderente al tipo di report aziendale standard. In questo caso è sufficiente una verifica rapida prima di distribuire, non una ricerca approfondita."
+  },
+  {
+    num:"Caso 3 di 5",
+    ctx:"Stai preparando una presentazione per il management. Chiedi all'AI di fornirti statistiche aggiornate sull'adozione dell'AI nelle PMI italiane.",
+    output:`<div class="ai-badge">OUTPUT AI</div><br>Secondo i dati più recenti, il 67% delle PMI italiane ha già integrato almeno uno strumento AI nei propri processi aziendali. Il 34% utilizza AI per attività di customer service, il 28% per analisi dati e il 18% per attività amministrative. La spesa media per l'AI nelle PMI è stimata in €12.400 annui per azienda.`,
+    correct:'ver',
+    fb:"⚠️ <strong>Verifica prima — i dati non hanno fonte.</strong> Le statistiche sono precise e credibili, ma l'AI non ha citato alcuna fonte. Dati così specifici (67%, €12.400) potrebbero essere inventati o non aggiornati. Prima di presentarli al management, verifica su fonti ufficiali (Istat, Confindustria, Osservatorio Politecnico di Milano)."
+  },
+  {
+    num:"Caso 4 di 5",
+    ctx:"Devi inviare una email ai colleghi per comunicare l'orario della riunione di team di giovedì prossimo, ore 10:00.",
+    output:`<div class="ai-badge">OUTPUT AI</div><br>Oggetto: Riunione di team — giovedì ore 10:00<br><br>Ciao a tutti,<br>vi ricordo che la riunione di team è confermata per giovedì prossimo alle ore 10:00. Vi chiedo di arrivare puntuali. Per chi è in smart working, il link per il collegamento sarà condiviso su Teams.<br><br>Grazie e a presto.`,
+    correct:'usa',
+    fb:"✅ <strong>Puoi usarlo direttamente.</strong> Si tratta di una comunicazione interna generica, senza dati sensibili, senza riferimenti normativi e senza informazioni verificabili. Il contenuto è standard e il rischio di errori rilevanti è minimo. Una rapida lettura è sufficiente."
+  },
+  {
+    num:"Caso 5 di 5",
+    ctx:"Stai redigendo un contratto con un fornitore. Chiedi all'AI di generare la clausola relativa alle responsabilità per l'uso di sistemi AI, in conformità con la normativa italiana più recente.",
+    output:`<div class="ai-badge">OUTPUT AI</div><br><em>"Il Fornitore garantisce che i sistemi AI utilizzati nell'erogazione dei servizi sono conformi al Regolamento UE 2024/1689 (AI Act) e ai decreti attuativi italiani. In caso di danno causato da decisioni automatizzate, si applica la presunzione di responsabilità di cui all'art. 7 del D.Lgs. 15/2026 e le tutele previste dalla L. 132/2025, con facoltà di ricorso all'Osservatorio nazionale AI."</em>`,
+    correct:'no',
+    fb:"🚫 <strong>Non usare — serve un legale.</strong> La clausola cita norme reali (AI Act, L. 132/2025) ma include riferimenti che vanno verificati con precisione (D.Lgs. 15/2026, art. 7). Le clausole contrattuali con effetti legali non devono mai essere generate da AI senza revisione di un professionista legale. Un errore in un contratto può avere conseguenze serie."
+  }
+];
+
+let cur=0, score=0, answered=false;
+
+function render(){
+  const c=cases[cur];
+  document.getElementById('case-num').textContent=c.num;
+  document.getElementById('context-bar').textContent='📋 '+c.ctx;
+  document.getElementById('output-box').innerHTML=c.output;
+  document.getElementById('feedback').classList.remove('show');
+  document.getElementById('feedback').innerHTML='';
+  document.getElementById('next-btn').classList.remove('show');
+  ['btn-usa','btn-ver','btn-no'].forEach(id=>{
+    const b=document.getElementById(id);
+    b.className=b.className.replace(/correct|wrong|other/g,'').trim();
+  });
+  answered=false;
+  updateDots();
+}
+
+function choose(ans){
+  if(answered)return;
+  answered=true;
+  const c=cases[cur];
+  const ok=ans===c.correct;
+  if(ok)score++;
+  document.getElementById('sc').textContent=score;
+  const map={usa:'btn-usa',ver:'btn-ver',no:'btn-no'};
+  document.getElementById(map[c.correct]).classList.add('correct');
+  if(!ok) document.getElementById(map[ans]).classList.add('wrong');
+  Object.keys(map).forEach(k=>{ if(k!==c.correct&&k!==ans) document.getElementById(map[k]).classList.add('other'); });
+  const fb=document.getElementById('feedback');
+  fb.innerHTML=c.fb;
+  fb.classList.add('show');
+  const nb=document.getElementById('next-btn');
+  nb.classList.add('show');
+  if(cur===cases.length-1) nb.textContent='Vedi risultato →';
+}
+
+function nextCase(){
+  cur++;
+  if(cur>=cases.length){showResult();return;}
+  render();
+}
+
+function updateDots(){
+  for(let i=0;i<5;i++){
+    const d=document.getElementById('pd'+i);
+    d.className='pdot'+(i<cur?' done':i===cur?' active':'');
+  }
+}
+
+function showResult(){
+  document.getElementById('fsc').textContent=score;
+  const msgs=['Rileggi il modulo — la verifica degli output AI è una competenza fondamentale.',
+    'Qualche caso ancora difficile — con la pratica migliorerà.',
+    'Buona capacità di analisi! Qualche sfumatura da affinare.',
+    'Ottimo! Sai distinguere quando fidarti dell\'AI e quando verificare.',
+    'Perfetto! Hai valutato correttamente tutti e 5 i casi.'];
+  const ems=['📖','💪','🌟','🎯','🏆'];
+  document.getElementById('ov-msg').textContent=msgs[score];
+  document.getElementById('ov-em').textContent=ems[score];
+  document.getElementById('ov').classList.add('show');
+}
+
+function restart(){
+  cur=0;score=0;answered=false;
+  document.getElementById('sc').textContent='0';
+  document.getElementById('ov').classList.remove('show');
+  document.getElementById('next-btn').textContent='Caso successivo →';
+  render();
+}
+
+render();
+function showStart(){document.getElementById('startOv').style.display='flex';}
+function startGame(){document.getElementById('startOv').style.display='none';restart();}
+</script>
+</body>
+</html>
